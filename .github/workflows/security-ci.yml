@@ -1,4 +1,4 @@
-
+﻿
 name: KubeShield Security CI
 
 on:
@@ -46,10 +46,11 @@ jobs:
         run: docker build --pull -t kubeshield-enterprise:ci .
 
       - name: Scan Docker image with Trivy
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: kubeshield-enterprise:ci
           format: table
           severity: HIGH,CRITICAL
           exit-code: "1"
           ignore-unfixed: false
+
