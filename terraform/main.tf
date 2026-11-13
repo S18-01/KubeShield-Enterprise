@@ -1,8 +1,12 @@
 
 data "aws_availability_zones" "available" {
   state = "available"
-}
 
+  filter {
+    name   = "zone-name"
+    values = ["us-east-1a", "us-east-1b"]
+  }
+}
 locals {
   name = "${var.project_name}-${var.environment}"
 

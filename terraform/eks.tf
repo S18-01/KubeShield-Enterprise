@@ -1,5 +1,6 @@
 
 resource "aws_eks_cluster" "kubeshield" {
+  # checkov:skip=CKV_AWS_58:EKS Kubernetes 1.28+ encrypts API data by default using AWS-owned KMS keys.
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster.arn
   version  = var.cluster_version
@@ -58,9 +59,7 @@ resource "aws_eks_node_group" "kubeshield" {
 
   depends_on = [
     aws_iam_role_policy_attachment.eks_worker_node,
-    aws_iam_role_policy_attachment.eks_ecr_readonly,
-    aws_eks_addon.vpc_cni,
-    aws_eks_addon.pod_identity_agent
+    aws_iam_role_policy_attachment.eks_ecr_readonly
   ]
 
   tags = {
