@@ -56,7 +56,42 @@ resource "aws_iam_role_policy_attachment" "eks_ecr_readonly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
 }
 
-resource "aws_iam_role_policy_attachment" "eks_cni" {
-  role       = aws_iam_role.eks_nodes.name
+
+
+data "aws_iam_policy_document" "vpc_cni_assume_role" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "sts:AssumeRole",
+      "sts:TagSession"
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/kubernetes-namespace"
+      values   = ["kube-system"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/kubernetes-service-account"
+      values   = ["aws-node"]
+    }
+  }
+}
+
+resource "aws_iam_role" "vpc_cni" {
+  name               = "${var.project_name}-${var.environment}-vpc-cni-role"
+  assume_role_policy = data.aws_iam_policy_document.vpc_cni_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "vpc_cni" {
+  role       = aws_iam_role.vpc_cni.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }

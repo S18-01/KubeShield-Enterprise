@@ -59,7 +59,8 @@ resource "aws_eks_node_group" "kubeshield" {
   depends_on = [
     aws_iam_role_policy_attachment.eks_worker_node,
     aws_iam_role_policy_attachment.eks_ecr_readonly,
-    aws_iam_role_policy_attachment.eks_cni
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.pod_identity_agent
   ]
 
   tags = {
