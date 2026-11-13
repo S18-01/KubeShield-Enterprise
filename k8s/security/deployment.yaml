@@ -22,10 +22,17 @@ spec:
         runAsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            sizeLimit: 64Mi
       containers:
         - name: kubeshield-api
           image: kubeshield-enterprise:v4
           imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
           ports:
             - containerPort: 8080
           securityContext:
