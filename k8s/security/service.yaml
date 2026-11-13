@@ -1,0 +1,15 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeshield-api
+  namespace: kubeshield
+spec:
+  type: ClusterIP
+  selector:
+    app: kubeshield-api
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
