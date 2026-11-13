@@ -40,3 +40,20 @@ security-reports/*.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# Terraform local files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local Docker image archives
+*.tar
