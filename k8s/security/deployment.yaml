@@ -28,13 +28,16 @@ spec:
             sizeLimit: 64Mi
       containers:
         - name: kubeshield-api
-          image: kubeshield-enterprise:v4
+          image: kubeshield-enterprise:v7
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: tmp-volume
               mountPath: /tmp
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9090
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

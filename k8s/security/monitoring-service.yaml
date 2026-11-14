@@ -1,0 +1,18 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeshield-metrics
+  namespace: kubeshield
+  labels:
+    app: kubeshield-api
+    component: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: kubeshield-api
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 9090
+      targetPort: 9090

@@ -27,3 +27,27 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kubeshield-allow-monitoring
+  namespace: kubeshield
+spec:
+  podSelector:
+    matchLabels:
+      app: kubeshield-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090

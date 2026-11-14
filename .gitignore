@@ -57,3 +57,5 @@ override.tf.json
 
 # Local Docker image archives
 *.tar
+# Local vulnerability scan output
+trivy-results.json

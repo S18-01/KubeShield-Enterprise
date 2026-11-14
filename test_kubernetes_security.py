@@ -76,3 +76,40 @@ def test_internal_service():
 
     assert service["spec"]["type"] == "ClusterIP"
     assert service["spec"]["ports"][0]["targetPort"] == 8080
+
+def test_metrics_not_exposed_through_api_service():
+    service = load_yaml("service.yaml")[0]
+
+    assert service["spec"]["type"] == "ClusterIP"
+    assert len(service["spec"]["ports"]) == 1
+    assert service["spec"]["ports"][0]["targetPort"] == 8080
+
+
+def test_monitoring_network_policy():
+    policies = load_yaml("networkpolicy.yaml")
+
+    monitoring = next(
+        p for p in policies
+        if p["metadata"]["name"] == "kubeshield-allow-monitoring"
+    )
+
+    assert monitoring["spec"]["podSelector"]["matchLabels"]["app"] == "kubeshield-api"
+
+    ingress = monitoring["spec"]["ingress"]
+
+    assert any(
+        port["port"] == 9090
+        for rule in ingress
+        for port in rule["ports"]
+    )
+
+    assert any(
+        source.get("namespaceSelector", {}).get("matchLabels", {}).get(
+            "kubernetes.io/metadata.name"
+        ) == "monitoring"
+        and source.get("podSelector", {}).get("matchLabels", {}).get(
+            "app.kubernetes.io/name"
+        ) == "prometheus"
+        for rule in ingress
+        for source in rule["from"]
+    )

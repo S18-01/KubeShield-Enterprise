@@ -1,0 +1,20 @@
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubeshield-api-monitor
+  namespace: monitoring
+  labels:
+    release: kubeshield-monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - kubeshield
+  selector:
+    matchLabels:
+      app: kubeshield-api
+      component: monitoring
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
