@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Activity,
   ArrowUpRight,
@@ -158,19 +158,27 @@ function Metric({
   );
 }
 
+
 function MonitoringChart({
   dataKey,
   color,
+  data,
 }: {
   dataKey: "requests" | "latency";
   color: string;
+  data?: {
+    time: string;
+    requests?: number;
+    latency?: number;
+  }[];
 }) {
+
   const gradientId = `chart-gradient-${dataKey}`;
 
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={monitoringData}>
+        <AreaChart data={data ?? monitoringData}>
           <defs>
             <linearGradient
               id={gradientId}
@@ -214,15 +222,35 @@ function MonitoringChart({
             axisLine={false}
           />
 
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#0f172a",
-              border: "1px solid #334155",
-              borderRadius: 12,
-              color: "#ffffff",
-            }}
-            labelStyle={{ color: "#cbd5e1" }}
-          />
+         
+<Tooltip
+  formatter={(value, name) => {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return ["N/A", String(name)];
+    }
+
+    if (dataKey === "requests") {
+      return [
+        `${numericValue.toFixed(3)} req/s`,
+        "HTTP Traffic",
+      ];
+    }
+
+    return [
+      `${numericValue.toFixed(3)} ms`,
+      "Average Latency",
+    ];
+  }}
+  contentStyle={{
+    backgroundColor: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: 12,
+    color: "#ffffff",
+  }}
+  labelStyle={{ color: "#cbd5e1" }}
+/>
 
           <Area
             type="monotone"
@@ -238,6 +266,63 @@ function MonitoringChart({
 }
 
 export default function Home() {
+  
+
+const [liveMetrics, setLiveMetrics] = useState<{
+  healthyReplicas: number | null;
+  requestsPerSecond: number | null;
+  trafficHistory: {
+    time: string;
+    requests: number;
+  }[];
+  latencyHistory: {
+    time: string;
+    latency: number;
+  }[];
+  timestamp: string;
+} | null>(null);
+
+
+const [metricsStatus, setMetricsStatus] = useState<
+  "loading" | "live" | "offline"
+>("loading");
+
+useEffect(() => {
+  let active = true;
+
+  async function loadMetrics() {
+    try {
+      const response = await fetch("/api/metrics", {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Metrics unavailable");
+      }
+
+      const data = await response.json();
+
+      if (active) {
+        setLiveMetrics(data);
+        setMetricsStatus("live");
+      }
+    } catch {
+      if (active) {
+        setLiveMetrics(null);
+        setMetricsStatus("offline");
+      }
+    }
+  }
+
+  loadMetrics();
+
+  const interval = setInterval(loadMetrics, 15000);
+
+  return () => {
+    active = false;
+    clearInterval(interval);
+  };
+}, []);
   const [active, setActive] =
     useState<Section>("Overview");
 
@@ -460,11 +545,21 @@ export default function Home() {
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Metric
-                  label="Configured Replicas"
-                  value="03"
-                  description="Kubernetes deployment configuration"
-                  icon={Box}
-                />
+                  
+  label="Healthy Replicas"
+  value={
+    metricsStatus === "live" &&
+    liveMetrics?.healthyReplicas != null
+      ? String(liveMetrics.healthyReplicas)
+      : "N/A"
+  }
+  description={
+    metricsStatus === "live"
+      ? "Live data from Prometheus"
+      : "Monitoring connection unavailable"
+  }
+  icon={Layers3}
+/>
                 <Metric
                   label="Unit Tests"
                   value="16/16"
@@ -486,25 +581,49 @@ export default function Home() {
               </div>
 
               <div className="grid gap-5 xl:grid-cols-2">
-                <Panel
-                  title="Application Traffic"
-                  subtitle="Simulated requests per second over 24 hours"
-                >
-                  <MonitoringChart
-                    dataKey="requests"
-                    color="#22d3ee"
-                  />
-                </Panel>
+                
+<Panel
+  title="Application Traffic"
+  subtitle={
+    metricsStatus === "live"
+      ? "Real HTTP requests per second over the last hour"
+      : "Live Prometheus traffic unavailable"
+  }
+>
+  {metricsStatus === "live" &&
+  liveMetrics?.trafficHistory?.length ? (
+    <MonitoringChart
+      dataKey="requests"
+      color="#22d3ee"
+      data={liveMetrics.trafficHistory}
+    />
+  ) : (
+    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
+      Historical monitoring data unavailable
+    </div>
+  )}
+</Panel>
 
-                <Panel
-                  title="Response Latency"
-                  subtitle="Simulated application latency in milliseconds"
-                >
-                  <MonitoringChart
-                    dataKey="latency"
-                    color="#a78bfa"
-                  />
-                </Panel>
+
+               
+<Panel
+  title="Response Latency"
+  subtitle="Real average HTTP latency in milliseconds (last 60 minutes)"
+>
+  {metricsStatus === "live" &&
+  liveMetrics?.latencyHistory?.length ? (
+    <MonitoringChart
+      dataKey="latency"
+      color="#a78bfa"
+      data={liveMetrics.latencyHistory}
+    />
+  ) : (
+    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
+      Historical latency data unavailable
+    </div>
+  )}
+</Panel>
+
               </div>
 
               <div className="grid gap-5 xl:grid-cols-2">
@@ -686,34 +805,88 @@ export default function Home() {
           )}
 
           {active === "Monitoring" && (
-            <>
+            <> 
+<div className="mb-5 grid gap-4 sm:grid-cols-2">
+  <Metric
+    label="Live HTTP Traffic"
+    value={
+      metricsStatus === "live" &&
+      liveMetrics?.requestsPerSecond != null
+        ? liveMetrics.requestsPerSecond.toFixed(3)
+        : "N/A"
+    }
+    description={
+      metricsStatus === "live"
+        ? "Requests/sec from Prometheus (5-minute average)"
+        : "Monitoring connection unavailable"
+    }
+    icon={Activity}
+  />
+
+  <Metric
+    label="Monitoring Status"
+    value={
+      metricsStatus === "live"
+        ? "Live"
+        : metricsStatus === "loading"
+          ? "Loading"
+          : "Offline"
+    }
+    description="Prometheus connection status"
+    icon={ShieldCheck}
+  />
+</div>
+
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs leading-6 text-amber-200">
-                This public dashboard uses simulated monitoring
-                values. The original project includes Prometheus
-                and Grafana monitoring of the local Kubernetes
-                application.
+                
+{metricsStatus === "live"
+  ? "Live monitoring is connected to the local Kubernetes cluster through Prometheus. Request throughput and response latency charts display real measurements from the last 60 minutes."
+  : metricsStatus === "loading"
+    ? "Checking the local Prometheus monitoring connection..."
+    : "Live monitoring is unavailable in this environment. Historical charts require a connection to Prometheus. The local Kubernetes monitoring environment can display real measurements."}
+
               </div>
 
               <div className="grid gap-5 xl:grid-cols-2">
-                <Panel
-                  title="Request Throughput"
-                  subtitle="Simulated HTTP requests per second"
-                >
-                  <MonitoringChart
-                    dataKey="requests"
-                    color="#22d3ee"
-                  />
-                </Panel>
+               
+<Panel
+  title="Request Throughput"
+  subtitle="Real HTTP requests per second (last 60 minutes)"
+>
+  {metricsStatus === "live" &&
+  liveMetrics?.trafficHistory?.length ? (
+    <MonitoringChart
+      dataKey="requests"
+      color="#22d3ee"
+      data={liveMetrics.trafficHistory}
+    />
+  ) : (
+    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
+      Historical monitoring data unavailable
+    </div>
+  )}
+</Panel>
 
-                <Panel
-                  title="Response Latency"
-                  subtitle="Illustrative latency data in milliseconds"
-                >
-                  <MonitoringChart
-                    dataKey="latency"
-                    color="#a78bfa"
-                  />
-                </Panel>
+
+                
+<Panel
+  title="Response Latency"
+  subtitle="Real average HTTP latency in milliseconds (last 60 minutes)"
+>
+  {metricsStatus === "live" &&
+  liveMetrics?.latencyHistory?.length ? (
+    <MonitoringChart
+      dataKey="latency"
+      color="#a78bfa"
+      data={liveMetrics.latencyHistory}
+    />
+  ) : (
+    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
+      Historical latency data unavailable
+    </div>
+  )}
+</Panel>
+
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
@@ -729,12 +902,26 @@ export default function Home() {
                   description="Prometheus and Grafana"
                   icon={Activity}
                 />
-                <Metric
-                  label="Data Source"
-                  value="Demo"
-                  description="No live cloud telemetry connected"
-                  icon={Globe2}
-                />
+                
+<Metric
+  label="Data Source"
+  value={
+    metricsStatus === "live"
+      ? "Prometheus"
+      : metricsStatus === "loading"
+        ? "Loading"
+        : "Offline"
+  }
+  description={
+    metricsStatus === "live"
+      ? "Connected to local Kubernetes monitoring"
+      : metricsStatus === "loading"
+        ? "Checking monitoring connection"
+        : "Local Prometheus connection unavailable"
+  }
+  icon={Globe2}
+/>
+
               </div>
             </>
           )}
