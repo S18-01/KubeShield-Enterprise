@@ -1,7 +1,6 @@
 ﻿
 import { NextResponse } from "next/server";
 
-
 const PROMETHEUS_URL = "http://127.0.0.1:9090";
 const SUPABASE_URL =
   "https://oshfktsokusmxkdxjnif.supabase.co";
@@ -46,6 +45,7 @@ function unavailable(message: string) {
   return NextResponse.json(
     {
       source: "unavailable",
+      status: "offline",
       error: message,
     },
     {
@@ -195,17 +195,21 @@ async function getSupabaseMetrics() {
 
   if (
     !Number.isFinite(collectedAt) ||
-    collectedAt > Date.now() + 60000 ||
-    Date.now() - collectedAt > STALE_AFTER_MS
+    collectedAt > Date.now() + 60000
   ) {
     return unavailable(
-      "Monitoring data is stale"
+      "Invalid monitoring timestamp"
     );
   }
+
+  const isLive =
+    Date.now() - collectedAt <= STALE_AFTER_MS;
 
   return NextResponse.json(
     {
       source: "supabase",
+      status: isLive ? "live" : "offline",
+      isLive,
       healthyReplicas: latest.healthy_replicas,
       requestsPerSecond: latest.requests_per_second,
       trafficHistory: latest.traffic_history ?? [],
@@ -239,6 +243,8 @@ export async function GET() {
     return NextResponse.json(
       {
         source: "prometheus",
+        status: "live",
+        isLive: true,
         healthyReplicas,
         requestsPerSecond,
         trafficHistory,

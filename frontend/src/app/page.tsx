@@ -44,6 +44,23 @@ type Section =
   | "CI/CD Pipeline"
   | "Demo Lab";
 
+type HistoryPoint = {
+  time: string;
+  requests?: number;
+  latency?: number;
+};
+
+type MetricsResponse = {
+  source?: "supabase" | "prometheus" | "unavailable";
+  status?: "live" | "offline";
+  isLive?: boolean;
+  healthyReplicas: number | null;
+  requestsPerSecond: number | null;
+  trafficHistory: HistoryPoint[];
+  latencyHistory: HistoryPoint[];
+  timestamp: string;
+};
+
 const navigation = [
   { name: "Overview", icon: Layers3 },
   { name: "Kubernetes", icon: Box },
@@ -52,23 +69,6 @@ const navigation = [
   { name: "CI/CD Pipeline", icon: Workflow },
   { name: "Demo Lab", icon: Terminal },
 ] as const;
-
-const monitoringData = Array.from(
-  { length: 24 },
-  (_, index) => ({
-    time: `${String(index).padStart(2, "0")}:00`,
-    requests: Math.round(
-      45 +
-        Math.sin(index / 2) * 19 +
-        (index % 5) * 7
-    ),
-    latency: Math.round(
-      90 +
-        Math.cos(index / 3) * 27 +
-        (index % 4) * 8
-    ),
-  })
-);
 
 const scanResults = [
   {
@@ -141,23 +141,17 @@ function Metric({
         <span className="text-xs font-medium text-slate-400">
           {label}
         </span>
-        <Icon
-          size={19}
-          className="shrink-0 text-cyan-400"
-        />
+        <Icon size={19} className="shrink-0 text-cyan-400" />
       </div>
-
-      <div className="mt-4 text-3xl font-semibold tracking-tight text-white">
+      <div className="mt-4 break-words text-2xl font-semibold tracking-tight text-white md:text-3xl">
         {value}
       </div>
-
       <p className="mt-2 text-xs leading-5 text-slate-400">
         {description}
       </p>
     </div>
   );
 }
-
 
 function MonitoringChart({
   dataKey,
@@ -166,19 +160,22 @@ function MonitoringChart({
 }: {
   dataKey: "requests" | "latency";
   color: string;
-  data?: {
-    time: string;
-    requests?: number;
-    latency?: number;
-  }[];
+  data: HistoryPoint[];
 }) {
-
   const gradientId = `chart-gradient-${dataKey}`;
+
+  if (!data.length) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm text-slate-400">
+        No recorded measurements available
+      </div>
+    );
+  }
 
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data ?? monitoringData}>
+        <AreaChart data={data}>
           <defs>
             <linearGradient
               id={gradientId}
@@ -212,7 +209,7 @@ function MonitoringChart({
             fontSize={10}
             tickLine={false}
             axisLine={false}
-            interval={5}
+            interval="preserveStartEnd"
           />
 
           <YAxis
@@ -222,35 +219,24 @@ function MonitoringChart({
             axisLine={false}
           />
 
-         
-<Tooltip
-  formatter={(value, name) => {
-    const numericValue = Number(value);
-
-    if (!Number.isFinite(numericValue)) {
-      return ["N/A", String(name)];
-    }
-
-    if (dataKey === "requests") {
-      return [
-        `${numericValue.toFixed(3)} req/s`,
-        "HTTP Traffic",
-      ];
-    }
-
-    return [
-      `${numericValue.toFixed(3)} ms`,
-      "Average Latency",
-    ];
-  }}
-  contentStyle={{
-    backgroundColor: "#0f172a",
-    border: "1px solid #334155",
-    borderRadius: 12,
-    color: "#ffffff",
-  }}
-  labelStyle={{ color: "#cbd5e1" }}
-/>
+          <Tooltip
+            formatter={(value) => {
+              const number = Number(value);
+              if (!Number.isFinite(number)) {
+                return ["N/A", dataKey];
+              }
+              return dataKey === "requests"
+                ? [`${number.toFixed(3)} req/s`, "HTTP Traffic"]
+                : [`${number.toFixed(3)} ms`, "Average Latency"];
+            }}
+            contentStyle={{
+              backgroundColor: "#0f172a",
+              border: "1px solid #334155",
+              borderRadius: 12,
+              color: "#ffffff",
+            }}
+            labelStyle={{ color: "#cbd5e1" }}
+          />
 
           <Area
             type="monotone"
@@ -265,78 +251,103 @@ function MonitoringChart({
   );
 }
 
+function formatTimestamp(timestamp?: string) {
+  if (!timestamp) return "N/A";
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "N/A";
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
 export default function Home() {
-  
-
-const [liveMetrics, setLiveMetrics] = useState<{
-  source?: "supabase" | "prometheus"; healthyReplicas: number | null;
-  requestsPerSecond: number | null;
-  trafficHistory: {
-    time: string;
-    requests: number;
-  }[];
-  latencyHistory: {
-    time: string;
-    latency: number;
-  }[];
-  timestamp: string;
-} | null>(null);
-
-
-const [metricsStatus, setMetricsStatus] = useState<
-  "loading" | "live" | "offline"
->("loading");
-
-useEffect(() => {
-  let active = true;
-
-  async function loadMetrics() {
-    try {
-      const response = await fetch("/api/metrics", {
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Metrics unavailable");
-      }
-
-      const data = await response.json();
-
-      if (active) {
-        setLiveMetrics(data);
-        setMetricsStatus("live");
-      }
-    } catch {
-      if (active) {
-        setLiveMetrics(null);
-        setMetricsStatus("offline");
-      }
-    }
-  }
-
-  loadMetrics();
-
-  const interval = setInterval(loadMetrics, 15000);
-
-  return () => {
-    active = false;
-    clearInterval(interval);
-  };
-}, []);
-  const [active, setActive] =
-    useState<Section>("Overview");
-
-  const [sidebarOpen, setSidebarOpen] =
-    useState(false);
-
-  const [scenario, setScenario] =
-    useState("Normal traffic");
+  const [active, setActive] = useState<Section>("Overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [scenario, setScenario] = useState("Normal traffic");
 
   const [events, setEvents] = useState<string[]>([
     "Demo environment initialized",
     "Security configuration loaded",
     "Monitoring dataset ready",
   ]);
+
+  const [liveMetrics, setLiveMetrics] =
+    useState<MetricsResponse | null>(null);
+
+  const [metricsStatus, setMetricsStatus] = useState<
+    "loading" | "live" | "offline"
+  >("loading");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadMetrics() {
+      try {
+        const response = await fetch("/api/metrics", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Monitoring API unavailable");
+        }
+
+        const data: MetricsResponse = await response.json();
+
+        if (!mounted) return;
+
+        setLiveMetrics(data);
+
+        const timestamp = Date.parse(data.timestamp);
+        const fresh =
+          Number.isFinite(timestamp) &&
+          timestamp <= Date.now() + 60000 &&
+          Date.now() - timestamp <= 3 * 60 * 1000;
+
+        setMetricsStatus(
+          data.isLive === false ||
+            data.status === "offline" ||
+            !fresh
+            ? "offline"
+            : "live"
+        );
+      } catch {
+        if (!mounted) return;
+
+        setMetricsStatus("offline");
+      }
+    }
+
+    void loadMetrics();
+
+    const interval = setInterval(() => {
+      void loadMetrics();
+    }, 15000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const hasSnapshot = Boolean(liveMetrics?.timestamp);
+  const isLive = metricsStatus === "live";
+  const isOffline = metricsStatus === "offline";
+
+  const trafficHistory = liveMetrics?.trafficHistory ?? [];
+  const latencyHistory = liveMetrics?.latencyHistory ?? [];
+
+  const monitoringSubtitle = isLive
+    ? "Live measurements from the last recorded hour"
+    : hasSnapshot
+      ? "Historical measurements from the last saved snapshot"
+      : "Monitoring data unavailable";
 
   function navigate(section: Section) {
     setActive(section);
@@ -355,14 +366,27 @@ useEffect(() => {
         "Simulated pod restart completed. Replica count restored.",
     };
 
-    const message =
-      messages[scenario] ?? "Simulation completed.";
-
     setEvents((previous) => [
-      message,
+      messages[scenario] ?? "Simulation completed.",
       ...previous.slice(0, 5),
     ]);
   }
+
+  const trafficChart = (
+    <MonitoringChart
+      dataKey="requests"
+      color="#22d3ee"
+      data={trafficHistory}
+    />
+  );
+
+  const latencyChart = (
+    <MonitoringChart
+      dataKey="latency"
+      color="#a78bfa"
+      data={latencyHistory}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-[#080d17] text-slate-200">
@@ -448,10 +472,7 @@ useEffect(() => {
           >
             <GitBranch size={17} />
             View Source Code
-            <ExternalLink
-              size={13}
-              className="ml-auto"
-            />
+            <ExternalLink size={13} className="ml-auto" />
           </a>
         </div>
       </aside>
@@ -479,8 +500,20 @@ useEffect(() => {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-300 sm:inline-flex">
-              Interactive Demo
+            <span
+              className={`hidden rounded-full border px-3 py-1.5 text-xs sm:inline-flex ${
+                isLive
+                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                  : isOffline
+                    ? "border-amber-500/20 bg-amber-500/10 text-amber-300"
+                    : "border-white/10 bg-white/5 text-slate-300"
+              }`}
+            >
+              {isLive
+                ? "Monitoring Live"
+                : isOffline
+                  ? "Monitoring Offline"
+                  : "Checking Monitoring"}
             </span>
 
             <a
@@ -545,85 +578,58 @@ useEffect(() => {
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Metric
-                  
-  label="Healthy Replicas"
-  value={
-    metricsStatus === "live" &&
-    liveMetrics?.healthyReplicas != null
-      ? String(liveMetrics.healthyReplicas)
-      : "N/A"
-  }
-  description={
-    metricsStatus === "live"
-      ? "Live data from Prometheus"
-      : "Monitoring connection unavailable"
-  }
-  icon={Layers3}
-/>
+                  label="Healthy Replicas"
+                  value={
+                    liveMetrics?.healthyReplicas != null
+                      ? String(liveMetrics.healthyReplicas)
+                      : "N/A"
+                  }
+                  description={
+                    isLive
+                      ? "Latest Kubernetes replica count"
+                      : hasSnapshot
+                        ? "Last recorded count (historical)"
+                        : "Monitoring data unavailable"
+                  }
+                  icon={Layers3}
+                />
+
                 <Metric
                   label="Unit Tests"
                   value="16/16"
                   description="Verified project test run"
                   icon={CheckCircle2}
                 />
+
                 <Metric
                   label="Checkov Checks"
                   value="125"
                   description="Passed in verified local scan"
                   icon={ShieldCheck}
                 />
+
                 <Metric
                   label="High / Critical CVEs"
-                  value="00"
+                  value="0"
                   description="Verified local Trivy scan result"
                   icon={Shield}
                 />
               </div>
 
               <div className="grid gap-5 xl:grid-cols-2">
-                
-<Panel
-  title="Application Traffic"
-  subtitle={
-    metricsStatus === "live"
-      ? "Real HTTP requests per second over the last hour"
-      : "Live Prometheus traffic unavailable"
-  }
->
-  {metricsStatus === "live" &&
-  liveMetrics?.trafficHistory?.length ? (
-    <MonitoringChart
-      dataKey="requests"
-      color="#22d3ee"
-      data={liveMetrics.trafficHistory}
-    />
-  ) : (
-    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-      Historical monitoring data unavailable
-    </div>
-  )}
-</Panel>
+                <Panel
+                  title="Application Traffic"
+                  subtitle={monitoringSubtitle}
+                >
+                  {trafficChart}
+                </Panel>
 
-
-               
-<Panel
-  title="Response Latency"
-  subtitle="Real average HTTP latency in milliseconds (last 60 minutes)"
->
-  {metricsStatus === "live" &&
-  liveMetrics?.latencyHistory?.length ? (
-    <MonitoringChart
-      dataKey="latency"
-      color="#a78bfa"
-      data={liveMetrics.latencyHistory}
-    />
-  ) : (
-    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-      Historical latency data unavailable
-    </div>
-  )}
-</Panel>
-
+                <Panel
+                  title="Response Latency"
+                  subtitle={monitoringSubtitle}
+                >
+                  {latencyChart}
+                </Panel>
               </div>
 
               <div className="grid gap-5 xl:grid-cols-2">
@@ -662,22 +668,10 @@ useEffect(() => {
                 >
                   <div className="space-y-3">
                     {[
-                      [
-                        "Application",
-                        "Python / Flask / Docker",
-                      ],
-                      [
-                        "Orchestration",
-                        "Kubernetes / 3 replicas",
-                      ],
-                      [
-                        "Monitoring",
-                        "Prometheus / Grafana",
-                      ],
-                      [
-                        "Automation",
-                        "GitHub Actions",
-                      ],
+                      ["Application", "Python / Flask / Docker"],
+                      ["Orchestration", "Kubernetes / 3 replicas"],
+                      ["Monitoring", "Prometheus / Grafana"],
+                      ["Automation", "GitHub Actions"],
                       [
                         "Infrastructure",
                         "Terraform / AWS EKS configuration",
@@ -710,12 +704,14 @@ useEffect(() => {
                   description="Deployment specification"
                   icon={Box}
                 />
+
                 <Metric
                   label="Workload Type"
                   value="Flask"
                   description="Containerized Python application"
                   icon={Server}
                 />
+
                 <Metric
                   label="Deployment"
                   value="Local"
@@ -805,88 +801,82 @@ useEffect(() => {
           )}
 
           {active === "Monitoring" && (
-            <> 
-<div className="mb-5 grid gap-4 sm:grid-cols-2">
-  <Metric
-    label="Live HTTP Traffic"
-    value={
-      metricsStatus === "live" &&
-      liveMetrics?.requestsPerSecond != null
-        ? liveMetrics.requestsPerSecond.toFixed(3)
-        : "N/A"
-    }
-    description={
-      metricsStatus === "live"
-        ? "Real Kubernetes HTTP traffic (5-minute average)"
-        : "Monitoring connection unavailable"
-    }
-    icon={Activity}
-  />
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <Metric
+                  label="HTTP Traffic"
+                  value={
+                    liveMetrics?.requestsPerSecond != null
+                      ? liveMetrics.requestsPerSecond.toFixed(3)
+                      : "N/A"
+                  }
+                  description={
+                    isLive
+                      ? "Latest HTTP requests per second"
+                      : hasSnapshot
+                        ? "Last recorded traffic (historical)"
+                        : "Monitoring data unavailable"
+                  }
+                  icon={Activity}
+                />
 
-  <Metric
-    label="Monitoring Status"
-    value={
-      metricsStatus === "live"
-        ? "Live"
-        : metricsStatus === "loading"
-          ? "Loading"
-          : "Offline"
-    }
-    description="Kubernetes monitoring freshness"
-    icon={ShieldCheck}
-  />
-</div>
+                <Metric
+                  label="Monitoring Status"
+                  value={
+                    isLive
+                      ? "Live"
+                      : metricsStatus === "loading"
+                        ? "Loading"
+                        : "Offline"
+                  }
+                  description="Kubernetes monitoring freshness"
+                  icon={ShieldCheck}
+                />
 
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs leading-6 text-amber-200">
-                
-{metricsStatus === "live"
-  ? "Live Kubernetes metrics are collected by Prometheus and delivered to this dashboard. Traffic and latency charts display real measurements from the last 60 minutes."
-  : metricsStatus === "loading"
-    ? "Checking monitoring data freshness..."
-    : "Monitoring is currently offline. The dashboard remains accessible, but fresh metrics require the Kubernetes cluster and monitoring publisher to be running."}
+                <Metric
+                  label="Last Updated"
+                  value={formatTimestamp(liveMetrics?.timestamp)}
+                  description={
+                    isLive
+                      ? "Latest monitoring snapshot"
+                      : hasSnapshot
+                        ? "Last recorded snapshot (historical)"
+                        : "No monitoring snapshot available"
+                  }
+                  icon={Activity}
+                />
+              </div>
 
+              <div
+                className={`rounded-xl border p-4 text-xs leading-6 ${
+                  isLive
+                    ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-200"
+                    : "border-amber-500/20 bg-amber-500/5 text-amber-200"
+                }`}
+              >
+                {isLive
+                  ? "Monitoring is live. Kubernetes measurements are collected by Prometheus and delivered to this dashboard."
+                  : metricsStatus === "loading"
+                    ? "Checking monitoring data freshness..."
+                    : hasSnapshot
+                      ? "Live monitoring is offline. The charts display the last recorded Kubernetes metrics. The Last Updated timestamp shows when these measurements were collected. Live updates resume when the Kubernetes cluster and monitoring publisher are running."
+                      : "Monitoring is currently unavailable. The dashboard remains accessible, but no saved monitoring snapshot could be retrieved."}
               </div>
 
               <div className="grid gap-5 xl:grid-cols-2">
-               
-<Panel
-  title="Request Throughput"
-  subtitle="Real HTTP requests per second (last 60 minutes)"
->
-  {metricsStatus === "live" &&
-  liveMetrics?.trafficHistory?.length ? (
-    <MonitoringChart
-      dataKey="requests"
-      color="#22d3ee"
-      data={liveMetrics.trafficHistory}
-    />
-  ) : (
-    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-      Historical monitoring data unavailable
-    </div>
-  )}
-</Panel>
+                <Panel
+                  title="Request Throughput"
+                  subtitle={monitoringSubtitle}
+                >
+                  {trafficChart}
+                </Panel>
 
-
-                
-<Panel
-  title="Response Latency"
-  subtitle="Real average HTTP latency in milliseconds (last 60 minutes)"
->
-  {metricsStatus === "live" &&
-  liveMetrics?.latencyHistory?.length ? (
-    <MonitoringChart
-      dataKey="latency"
-      color="#a78bfa"
-      data={liveMetrics.latencyHistory}
-    />
-  ) : (
-    <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-      Historical latency data unavailable
-    </div>
-  )}
-</Panel>
-
+                <Panel
+                  title="Response Latency"
+                  subtitle={monitoringSubtitle}
+                >
+                  {latencyChart}
+                </Panel>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
@@ -896,32 +886,34 @@ useEffect(() => {
                   description="From Kubernetes manifests"
                   icon={Layers3}
                 />
+
                 <Metric
                   label="Monitoring Stack"
                   value="2"
                   description="Prometheus and Grafana"
                   icon={Activity}
                 />
-                
-<Metric
-  label="Data Source"
-  value={
-    metricsStatus === "live"
-      ? liveMetrics?.source === "supabase" ? "Supabase" : "Prometheus"
-      : metricsStatus === "loading"
-        ? "Loading"
-        : "Offline"
-  }
-  description={
-    metricsStatus === "live"
-      ? "Kubernetes metrics delivered through Supabase"
-      : metricsStatus === "loading"
-        ? "Checking monitoring connection"
-        : "Monitoring data unavailable or outdated"
-  }
-  icon={Globe2}
-/>
 
+                <Metric
+                  label="Data Source"
+                  value={
+                    liveMetrics?.source === "supabase"
+                      ? "Supabase"
+                      : liveMetrics?.source === "prometheus"
+                        ? "Prometheus"
+                        : metricsStatus === "loading"
+                          ? "Loading"
+                          : "Unavailable"
+                  }
+                  description={
+                    isLive
+                      ? "Live Kubernetes monitoring data"
+                      : hasSnapshot
+                        ? "Historical monitoring snapshot"
+                        : "No monitoring data available"
+                  }
+                  icon={Globe2}
+                />
               </div>
             </>
           )}
@@ -935,12 +927,14 @@ useEffect(() => {
                   description="Verified scan result"
                   icon={ShieldCheck}
                 />
+
                 <Metric
                   label="Checkov Passed"
                   value="125"
                   description="4 checks skipped"
                   icon={CheckCircle2}
                 />
+
                 <Metric
                   label="High / Critical CVEs"
                   value="0"
@@ -1117,13 +1111,10 @@ useEffect(() => {
           )}
 
           <footer className="py-4 text-center text-xs text-slate-500">
-            Â© 2026 KubeShield Enterprise. All rights reserved.
+            © 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
     </div>
   );
 }
-
-
-
