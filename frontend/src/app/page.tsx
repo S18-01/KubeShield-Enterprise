@@ -327,42 +327,32 @@ export default function Home() {
                   <ChevronRight
                     size={15}
                     className="ml-auto"
-                  />
+
+/>
                 )}
               </button>
             ))}
           </nav>
         </div>
 
-        <div className="mt-auto p-4">
-          <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
-              <Shield size={15} />
-              <footer className="mt-8 border-t border-slate-800 pt-5 pb-6 text-center text-xs text-slate-500">
-  © 2026 KubeShield Enterprise. Built with Kubernetes, Docker, Terraform, and DevSecOps.
-</footer>
-            </div>
-            <p className="mt-2 text-xs leading-5 text-slate-400">
-  Enterprise Kubernetes security, automated vulnerability scanning,
-  DevSecOps pipelines, and cloud infrastructure monitoring.
-</p>
-          </div>
+        
+<div className="mt-auto p-4">
+  <a
+    href={repositoryUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-white"
+  >
+    <GitBranch size={17} />
+    View Source Code
+    <ExternalLink size={13} className="ml-auto" />
+  </a>
+</div>
 
-          <a
-            href={repositoryUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-white"
-          >
-            <GitBranch size={17} />
-            View Source Code
-            <ExternalLink size={13} className="ml-auto" />
-          </a>
-        </div>
-      </aside>
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-white/10 bg-[#080d17]/95 px-5 backdrop-blur-xl md:px-9">
+
           <div className="flex items-center gap-4">
             <button
               type="button"
