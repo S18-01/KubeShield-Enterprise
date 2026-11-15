@@ -9,14 +9,11 @@ import {
   CheckCircle2,
   ChevronRight,
   Cloud,
-  Code2,
   ExternalLink,
   GitBranch,
   Globe2,
   Layers3,
-  LockKeyhole,
   Menu,
-  Network,
   Play,
   Server,
   Shield,
@@ -56,15 +53,22 @@ const navigation = [
   { name: "Demo Lab", icon: Terminal },
 ] as const;
 
-const monitoringData = Array.from({ length: 24 }, (_, index) => ({
-  time: `${String(index).padStart(2, "0")}:00`,
-  requests: Math.round(
-    45 + Math.sin(index / 2) * 19 + (index % 5) * 7
-  ),
-  latency: Math.round(
-    90 + Math.cos(index / 3) * 27 + (index % 4) * 8
-  ),
-}));
+const monitoringData = Array.from(
+  { length: 24 },
+  (_, index) => ({
+    time: `${String(index).padStart(2, "0")}:00`,
+    requests: Math.round(
+      45 +
+        Math.sin(index / 2) * 19 +
+        (index % 5) * 7
+    ),
+    latency: Math.round(
+      90 +
+        Math.cos(index / 3) * 27 +
+        (index % 4) * 8
+    ),
+  })
+);
 
 const scanResults = [
   {
@@ -137,11 +141,16 @@ function Metric({
         <span className="text-xs font-medium text-slate-400">
           {label}
         </span>
-        <Icon size={19} className="shrink-0 text-cyan-400" />
+        <Icon
+          size={19}
+          className="shrink-0 text-cyan-400"
+        />
       </div>
+
       <div className="mt-4 text-3xl font-semibold tracking-tight text-white">
         {value}
       </div>
+
       <p className="mt-2 text-xs leading-5 text-slate-400">
         {description}
       </p>
@@ -182,11 +191,13 @@ function MonitoringChart({
               />
             </linearGradient>
           </defs>
+
           <CartesianGrid
             stroke="#263244"
             strokeDasharray="3 5"
             vertical={false}
           />
+
           <XAxis
             dataKey="time"
             stroke="#64748b"
@@ -195,12 +206,14 @@ function MonitoringChart({
             axisLine={false}
             interval={5}
           />
+
           <YAxis
             stroke="#64748b"
             fontSize={10}
             tickLine={false}
             axisLine={false}
           />
+
           <Tooltip
             contentStyle={{
               backgroundColor: "#0f172a",
@@ -210,6 +223,7 @@ function MonitoringChart({
             }}
             labelStyle={{ color: "#cbd5e1" }}
           />
+
           <Area
             type="monotone"
             dataKey={dataKey}
@@ -224,9 +238,15 @@ function MonitoringChart({
 }
 
 export default function Home() {
-  const [active, setActive] = useState<Section>("Overview");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [scenario, setScenario] = useState("Normal traffic");
+  const [active, setActive] =
+    useState<Section>("Overview");
+
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false);
+
+  const [scenario, setScenario] =
+    useState("Normal traffic");
+
   const [events, setEvents] = useState<string[]>([
     "Demo environment initialized",
     "Security configuration loaded",
@@ -327,32 +347,32 @@ export default function Home() {
                   <ChevronRight
                     size={15}
                     className="ml-auto"
-
-/>
+                  />
                 )}
               </button>
             ))}
           </nav>
         </div>
 
-        
-<div className="mt-auto p-4">
-  <a
-    href={repositoryUrl}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-white"
-  >
-    <GitBranch size={17} />
-    View Source Code
-    <ExternalLink size={13} className="ml-auto" />
-  </a>
-</div>
-
+        <div className="mt-auto p-4">
+          <a
+            href={repositoryUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-white"
+          >
+            <GitBranch size={17} />
+            View Source Code
+            <ExternalLink
+              size={13}
+              className="ml-auto"
+            />
+          </a>
+        </div>
+      </aside>
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-white/10 bg-[#080d17]/95 px-5 backdrop-blur-xl md:px-9">
-
           <div className="flex items-center gap-4">
             <button
               type="button"
@@ -409,11 +429,12 @@ export default function Home() {
                     </span>
                   </h2>
 
- <p className="mt-4 max-w-xl text-sm leading-7 text-slate-400">
-  Explore Kubernetes workload security, automated DevSecOps checks,
-  real-time security insights, and application observability
-  through an interactive security dashboard.
-</p>                 
+                  <p className="mt-4 max-w-xl text-sm leading-7 text-slate-400">
+                    Explore Kubernetes workload security,
+                    automated DevSecOps checks, security
+                    insights, and application observability
+                    through an interactive security dashboard.
+                  </p>
 
                   <div className="mt-6 flex flex-wrap gap-3">
                     <button
@@ -522,11 +543,26 @@ export default function Home() {
                 >
                   <div className="space-y-3">
                     {[
-                      ["Application", "Python / Flask / Docker"],
-                      ["Orchestration", "Kubernetes / 3 replicas"],
-                      ["Monitoring", "Prometheus / Grafana"],
-                      ["Automation", "GitHub Actions"],
-                      ["Infrastructure", "Terraform / AWS EKS configuration"],
+                      [
+                        "Application",
+                        "Python / Flask / Docker",
+                      ],
+                      [
+                        "Orchestration",
+                        "Kubernetes / 3 replicas",
+                      ],
+                      [
+                        "Monitoring",
+                        "Prometheus / Grafana",
+                      ],
+                      [
+                        "Automation",
+                        "GitHub Actions",
+                      ],
+                      [
+                        "Infrastructure",
+                        "Terraform / AWS EKS configuration",
+                      ],
                     ].map(([name, value]) => (
                       <div
                         key={name}
@@ -893,13 +929,8 @@ export default function Home() {
             </>
           )}
 
-          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 py-5 text-xs text-slate-500">
-            <span>
-              KubeShield Enterprise | Kubernetes Security & DevSecOps
-            </span>
-            <span>
-              KubeShield Enterprise | Cloud Security • Kubernetes • DevSecOps
-            </span>
+          <footer className="py-4 text-center text-xs text-slate-500">
+            © 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
