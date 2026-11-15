@@ -338,12 +338,12 @@ export default function Home() {
           <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-4">
             <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
               <Shield size={15} />
-              Portfolio Demonstration
+              KubeShield Security Platform
             </div>
             <p className="mt-2 text-xs leading-5 text-slate-400">
-              Interactive demonstration based on the
-              KubeShield Enterprise security project.
-            </p>
+  Enterprise Kubernetes security, automated vulnerability scanning,
+  DevSecOps pipelines, and cloud infrastructure monitoring.
+</p>
           </div>
 
           <a
@@ -417,12 +417,11 @@ export default function Home() {
                     </span>
                   </h2>
 
-                  <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300">
-                    Explore Kubernetes workload security,
-                    automated DevSecOps checks, and application
-                    observability in one interactive portfolio
-                    experience.
-                  </p>
+ <p className="mt-4 max-w-xl text-sm leading-7 text-slate-400">
+  Explore Kubernetes workload security, automated DevSecOps checks,
+  real-time security insights, and application observability
+  through an interactive security dashboard.
+</p>                 
 
                   <div className="mt-6 flex flex-wrap gap-3">
                     <button
