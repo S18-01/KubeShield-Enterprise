@@ -338,7 +338,9 @@ export default function Home() {
           <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-4">
             <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
               <Shield size={15} />
-              KubeShield Security Platform
+              <footer className="mt-8 border-t border-slate-800 pt-5 pb-6 text-center text-xs text-slate-500">
+  © 2026 KubeShield Enterprise. Built with Kubernetes, Docker, Terraform, and DevSecOps.
+</footer>
             </div>
             <p className="mt-2 text-xs leading-5 text-slate-400">
   Enterprise Kubernetes security, automated vulnerability scanning,
