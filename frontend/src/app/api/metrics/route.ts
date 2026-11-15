@@ -1,7 +1,6 @@
-
+﻿
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
 
 const PROMETHEUS_URL = "http://127.0.0.1:9090";
 const SUPABASE_URL =
