@@ -1,4 +1,4 @@
-
+﻿
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -269,7 +269,7 @@ export default function Home() {
   
 
 const [liveMetrics, setLiveMetrics] = useState<{
-  healthyReplicas: number | null;
+  source?: "supabase" | "prometheus"; healthyReplicas: number | null;
   requestsPerSecond: number | null;
   trafficHistory: {
     time: string;
@@ -817,7 +817,7 @@ useEffect(() => {
     }
     description={
       metricsStatus === "live"
-        ? "Requests/sec from Prometheus (5-minute average)"
+        ? "Real Kubernetes HTTP traffic (5-minute average)"
         : "Monitoring connection unavailable"
     }
     icon={Activity}
@@ -832,7 +832,7 @@ useEffect(() => {
           ? "Loading"
           : "Offline"
     }
-    description="Prometheus connection status"
+    description="Kubernetes monitoring freshness"
     icon={ShieldCheck}
   />
 </div>
@@ -840,10 +840,10 @@ useEffect(() => {
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs leading-6 text-amber-200">
                 
 {metricsStatus === "live"
-  ? "Live monitoring is connected to the local Kubernetes cluster through Prometheus. Request throughput and response latency charts display real measurements from the last 60 minutes."
+  ? "Live Kubernetes metrics are collected by Prometheus and delivered to this dashboard. Traffic and latency charts display real measurements from the last 60 minutes."
   : metricsStatus === "loading"
-    ? "Checking the local Prometheus monitoring connection..."
-    : "Live monitoring is unavailable in this environment. Historical charts require a connection to Prometheus. The local Kubernetes monitoring environment can display real measurements."}
+    ? "Checking monitoring data freshness..."
+    : "Monitoring is currently offline. The dashboard remains accessible, but fresh metrics require the Kubernetes cluster and monitoring publisher to be running."}
 
               </div>
 
@@ -907,17 +907,17 @@ useEffect(() => {
   label="Data Source"
   value={
     metricsStatus === "live"
-      ? "Prometheus"
+      ? liveMetrics?.source === "supabase" ? "Supabase" : "Prometheus"
       : metricsStatus === "loading"
         ? "Loading"
         : "Offline"
   }
   description={
     metricsStatus === "live"
-      ? "Connected to local Kubernetes monitoring"
+      ? "Kubernetes metrics delivered through Supabase"
       : metricsStatus === "loading"
         ? "Checking monitoring connection"
-        : "Local Prometheus connection unavailable"
+        : "Monitoring data unavailable or outdated"
   }
   icon={Globe2}
 />
@@ -1117,10 +1117,13 @@ useEffect(() => {
           )}
 
           <footer className="py-4 text-center text-xs text-slate-500">
-            © 2026 KubeShield Enterprise. All rights reserved.
+            Â© 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
     </div>
   );
 }
+
+
+
