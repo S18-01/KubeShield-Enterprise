@@ -1,4 +1,4 @@
-# KubeShield Enterprise
+﻿# KubeShield Enterprise
 
 ### Cloud-Native Kubernetes Security, DevSecOps and Observability
 
@@ -201,6 +201,49 @@ The local monitoring API retrieves approximately 60 minutes of historical Promet
 
 The public dashboard does not expose Prometheus or Kubernetes administration endpoints.
 
+
+### Public Monitoring with Supabase and Vercel
+
+KubeShield Enterprise provides a public monitoring dashboard hosted on Vercel.
+
+**Monitoring data flow:**
+
+1. Kubernetes runs the KubeShield API using three replicas.
+2. Prometheus collects application metrics from the Kubernetes workloads.
+3. A PowerShell publisher queries Prometheus and prepares monitoring snapshots.
+4. The publisher uploads snapshots to a Supabase PostgreSQL table.
+5. The Vercel-hosted Next.js API retrieves the latest snapshot.
+6. The public dashboard displays HTTP traffic, response latency, replica health, and monitoring status.
+
+**Live monitoring behavior:**
+
+- The publisher runs approximately every 60 seconds.
+- The dashboard refreshes its monitoring data every 15 seconds.
+- Snapshots older than three minutes are treated as unavailable.
+- The public dashboard remains accessible when local monitoring is offline.
+- Fresh monitoring requires the local Kubernetes cluster, Prometheus connection, and publisher to be running.
+
+**Automated Windows startup:**
+
+The `scripts/start-monitoring.ps1` launcher is configured through Windows Task Scheduler to start at user sign-in.
+
+The launcher reads `KUBESHIELD_SUPABASE_KEY` from the Windows User environment variables and executes `scripts/publish-metrics.ps1` repeatedly.
+
+The Supabase secret key must also be configured securely in Vercel as a server-side environment variable.
+
+Never commit credentials or environment-variable values to GitHub.
+
+**Deployment architecture:**
+
+- Kubernetes: Docker Desktop local cluster
+- Application monitoring: Prometheus
+- Metrics visualization: Grafana and Next.js
+- Monitoring data storage: Supabase PostgreSQL
+- Public dashboard hosting: Vercel
+- Metrics publishing automation: Windows Task Scheduler
+
+The AWS EKS infrastructure is defined separately using Terraform and has not been deployed as part of the public demonstration.
+
 ## DevSecOps and CI/CD
 
 The GitHub Actions workflow is defined in:
@@ -374,3 +417,4 @@ Infrastructure and security configurations should be independently validated bef
 Master of Engineering in Cybersecurity
 
 University of Maryland, College Park
+
