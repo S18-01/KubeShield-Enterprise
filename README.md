@@ -1,4 +1,12 @@
-﻿# KubeShield Enterprise
+## Live Interactive Demo
+
+🌐 [Launch KubeShield Enterprise Dashboard](https://kube-shield-enterprise.vercel.app)
+
+Explore Kubernetes security, monitoring, DevSecOps pipelines, and interactive security demonstrations.
+
+Note: The public dashboard uses simulated data to demonstrate the platform. 
+ 
+ # KubeShield Enterprise
 
 **Cloud-Native Kubernetes Security, DevSecOps and Observability**
 
