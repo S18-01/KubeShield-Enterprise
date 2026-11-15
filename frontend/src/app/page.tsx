@@ -907,7 +907,7 @@ export default function Home() {
               KubeShield Enterprise | Kubernetes Security & DevSecOps
             </span>
             <span>
-              Portfolio demonstration | Not a production security console
+              KubeShield Enterprise | Cloud Security • Kubernetes • DevSecOps
             </span>
           </footer>
         </main>
