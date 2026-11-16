@@ -486,13 +486,7 @@ useEffect(() => {
             ))}
             <div className="my-3 border-t border-white/10" />
 
-            <a
-              href="/login"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white"
-            >
-              <ShieldCheck size={18} />
-              Sign In / Register
-            </a>
+            
           </nav>
         </div>
 
@@ -1179,7 +1173,7 @@ useEffect(() => {
           )}
 
           <footer className="py-4 text-center text-xs text-slate-500">
-            Â© 2026 KubeShield Enterprise. All rights reserved.
+            Ã‚Â© 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
