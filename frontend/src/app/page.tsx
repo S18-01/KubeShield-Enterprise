@@ -1083,21 +1083,46 @@ useEffect(() => {
             </section>
           )}
           {active === "Demo Lab" && (
-            <section className="mb-5 rounded-2xl border border-cyan-500/20 bg-[#101827] p-5">
-              <div className="mb-4">
-                <h2 className="text-lg font-semibold text-white">
-                  Kubernetes YAML Security Scanner
-                </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  Scan manifests, inspect findings, apply suggested fixes,
-                  and download reports without signing in.
+            <section className="mb-5 rounded-2xl border border-cyan-500/20 bg-[#101827] p-6">
+              <h2 className="text-xl font-semibold text-white">
+                Kubernetes Security Scanner Preview
+              </h2>
+
+              <p className="mt-3 text-sm leading-7 text-slate-400">
+                Explore how KubeShield identifies insecure Kubernetes
+                configurations. Sign in to test your own YAML manifests.
+              </p>
+
+              <div className="mt-6 rounded-xl border border-white/10 bg-slate-950 p-5">
+                <h3 className="font-semibold text-cyan-300">
+                  Example Security Findings
+                </h3>
+
+                <p className="mt-2 text-xs text-slate-500">
+                  Illustrative results only. No scan has been executed.
                 </p>
+
+                <div className="mt-5 space-y-4 text-sm">
+                  <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 text-red-300">
+                    Critical: Privileged container enabled
+                  </div>
+
+                  <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-4 text-orange-300">
+                    High: Host networking enabled
+                  </div>
+
+                  <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-yellow-300">
+                    Medium: Unpinned container image
+                  </div>
+                </div>
               </div>
-              <iframe
-                title="Kubernetes YAML Security Scanner"
-                src="/demo"
-                className="h-[950px] w-full rounded-xl border border-white/10 bg-slate-950"
-              />
+
+              <a
+                href="/workspace"
+                className="mt-6 inline-flex rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+              >
+                Test Security Scanner
+              </a>
             </section>
           )}
           {active === "Demo Lab" && (
@@ -1174,7 +1199,7 @@ useEffect(() => {
           )}
 
           <footer className="py-4 text-center text-xs text-slate-500">
-            Ãƒâ€šÃ‚Â© 2026 KubeShield Enterprise. All rights reserved.
+            ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
