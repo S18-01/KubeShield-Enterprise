@@ -1,4 +1,4 @@
-﻿# KubeShield Enterprise
+# KubeShield Enterprise
 
 ### Cloud-Native Kubernetes Security, DevSecOps and Observability
 
@@ -26,6 +26,34 @@ The public dashboard is hosted on Vercel. Live Prometheus telemetry is available
 - Automated testing and security scanning using GitHub Actions, pytest, Bandit, pip-audit, Checkov, and Trivy.
 - Developed Terraform configurations for a security-focused AWS EKS architecture.
 - Published an interactive frontend using Vercel.
+- Added five security scanners, a public read-only Demo Lab, and an authenticated Security Portal with saved scan history.
+
+## Interactive Security Scanning Platform
+
+The Next.js dashboard includes a public **Demo Lab** with predefined, read-only examples and an authenticated **Security Portal** for scanning user-supplied configuration files. Scan results include a rule-based security score from 0 to 100, severity breakdowns, findings, and remediation guidance. The Security Portal supports private scan history through Supabase.
+
+| Scanner | Input | Analysis |
+|---|---|---|
+| Kubernetes configuration | `.yaml`, `.yml` | Workload and container configuration risks |
+| Dockerfile | `Dockerfile`, `.dockerfile` | Unsafe build instructions, root execution, unpinned base images |
+| Terraform | `.tf` | Selected infrastructure misconfigurations and exposure patterns |
+| AWS IAM | `.json` | Overly broad permissions and risky policy patterns |
+| Dependencies | `requirements.txt`, `package.json` | Known vulnerability lookups through the OSV service for supported pinned dependencies |
+
+### Scan Workflow
+
+1. Choose a scanner in the Demo Lab or authenticated Security Portal.
+2. Review the read-only example, or supply a supported configuration file in the Security Portal.
+3. Run the relevant scanner and review its score, severity charts, findings, and suggested remediations.
+4. In the Security Portal, save results to private scan history for later review.
+
+### Scanner Limitations
+
+- Configuration scanning is rule-based and does not prove a workload or infrastructure is secure.
+- A score of 100 means no issues were detected by the implemented checks, not that a resource is vulnerability-free.
+- Dependency scanning depends on OSV availability and supported package/version information. A failed lookup or unsupported dependency is not evidence of safety.
+- The public Demo Lab runs on predefined examples and does not deploy workloads or modify infrastructure.
+- The AWS EKS architecture described below is Terraform-defined and has not been deployed.
 
 ## Technology Stack
 
@@ -42,6 +70,8 @@ The public dashboard is hosted on Vercel. Live Prometheus telemetry is available
 | CI/CD | GitHub Actions |
 | Testing | pytest |
 | Hosting | Vercel |
+| Authentication and scan storage | Supabase |
+| Dependency vulnerability data | OSV |
 
 ## System Architecture
 
@@ -417,4 +447,3 @@ Infrastructure and security configurations should be independently validated bef
 Master of Engineering in Cybersecurity
 
 University of Maryland, College Park
-
