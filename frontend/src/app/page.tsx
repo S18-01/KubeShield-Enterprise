@@ -2,6 +2,7 @@
 import WorkspaceScanner from "./workspace/WorkspaceScanner";
 import SecurityScanCharts from "./SecurityScanCharts";
 import { scanDockerfile } from "../lib/dockerfile-scanner";
+import { scanTerraform, scanIam, scanDependencies, scannerExamples, scannerLabels, type ScannerType } from "../lib/extra-scanners";
 import { scanKubernetesYaml, type ScanResult } from "../lib/kubernetes-scanner";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -301,7 +302,8 @@ CMD ["bash"]`;
 export default function Home() {
   const [active, setActive] = useState<Section>("Overview");
   const [demoResult, setDemoResult] = useState<ScanResult | null>(null);
-  const [demoScanType, setDemoScanType] = useState<"kubernetes" | "dockerfile">("kubernetes");
+  const [demoError, setDemoError] = useState("");
+  const [demoScanType, setDemoScanType] = useState<ScannerType>("kubernetes");
 
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
@@ -1107,7 +1109,7 @@ useEffect(() => {
               </h2>
 
               <p className="mt-3 text-sm text-slate-400">
-                Explore security findings using predefined Kubernetes YAML and Dockerfile examples.
+                Explore security findings using five predefined configuration and dependency examples.
               </p>
 
               <label className="mt-5 block text-sm text-slate-300">
@@ -1115,13 +1117,17 @@ useEffect(() => {
                 <select
                   value={demoScanType}
                   onChange={(event) => {
-                    setDemoScanType(event.target.value as "kubernetes" | "dockerfile");
+                    setDemoScanType(event.target.value as ScannerType);
                     setDemoResult(null);
+                    setDemoError("");
                   }}
                   className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 p-3 text-white"
                 >
                   <option value="kubernetes">Kubernetes YAML</option>
                   <option value="dockerfile">Dockerfile</option>
+                  <option value="terraform">Terraform (.tf)</option>
+                  <option value="iam">AWS IAM (.json)</option>
+                  <option value="dependencies">Dependencies (OSV)</option>
                 </select>
               </label>
 
@@ -1133,19 +1139,26 @@ useEffect(() => {
               <div className="mt-6 grid gap-5 xl:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-slate-950 p-5">
                   <h3 className="mb-4 font-semibold text-cyan-300">
-                    {demoScanType === "dockerfile" ? "Sample Dockerfile (Read Only)" : "Sample Kubernetes YAML (Read Only)"}
+                    {`Sample ${scannerLabels[demoScanType]} (Read Only)`}
                   </h3>
 
                   <pre className="overflow-x-auto rounded-lg bg-[#080d18] p-4 text-xs leading-6 text-slate-300">
-                    <code>{demoScanType === "dockerfile" ? DEMO_DOCKERFILE : DEMO_YAML}</code>
+                    <code>{demoScanType === "dockerfile" ? DEMO_DOCKERFILE : demoScanType === "kubernetes" ? DEMO_YAML : scannerExamples[demoScanType]}</code>
                   </pre>
 
                   <button
                     type="button"
-                    onClick={() => setDemoResult(demoScanType === "dockerfile" ? scanDockerfile(DEMO_DOCKERFILE) : scanKubernetesYaml(DEMO_YAML))}
+                    onClick={async () => {
+                      setDemoResult(null);
+                      try {
+                        const next = demoScanType === "dockerfile" ? scanDockerfile(DEMO_DOCKERFILE) : demoScanType === "terraform" ? scanTerraform(scannerExamples.terraform) : demoScanType === "iam" ? scanIam(scannerExamples.iam) : demoScanType === "dependencies" ? await scanDependencies(scannerExamples.dependencies) : scanKubernetesYaml(DEMO_YAML);
+                        setDemoResult(next);
+                        setDemoError("");
+                      } catch (error) { setDemoError(error instanceof Error ? error.message : "Scan failed."); }
+                    }}
                     className="mt-5 rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
                   >
-                    {demoScanType === "dockerfile" ? "Scan Dockerfile" : "Scan Kubernetes YAML"}
+                    {`Scan ${scannerLabels[demoScanType]}`}
                   </button>
                 </div>
 
@@ -1154,6 +1167,7 @@ useEffect(() => {
                     Security Scan Results
                   </h3>
 
+                  {demoError && <p role="alert" className="mb-3 text-sm text-red-300">{demoError}</p>}
                   {!demoResult ? (
                     <p className="text-sm text-slate-400">
                       Run the selected security scanner to view findings.

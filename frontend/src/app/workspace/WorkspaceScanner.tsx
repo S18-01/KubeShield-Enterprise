@@ -1,6 +1,7 @@
 
 "use client";
 import { scanDockerfile } from "@/lib/dockerfile-scanner";
+import { scanTerraform, scanIam, scanDependencies, scannerLabels, scannerNames, scannerAccept, type ScannerType } from "@/lib/extra-scanners";
 import SecurityScanCharts from "../SecurityScanCharts";
 
 import { useCallback, useEffect, useState } from "react";
@@ -50,7 +51,7 @@ export default function WorkspaceScanner() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [yaml, setYaml] = useState(sample);
-  const [scanType, setScanType] = useState<"kubernetes" | "dockerfile">("kubernetes");
+  const [scanType, setScanType] = useState<ScannerType>("kubernetes");
   const [scanName, setScanName] = useState("Kubernetes Security Scan");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [history, setHistory] = useState<SavedScan[]>([]);
@@ -98,12 +99,12 @@ export default function WorkspaceScanner() {
     };
   }, [router, loadHistory]);
 
-  function scan() {
+  async function scan() {
     setError("");
     setMessage("");
 
     try {
-      const scanResult = scanType === "dockerfile" ? scanDockerfile(yaml) : scanKubernetesYaml(yaml);
+      const scanResult = scanType === "dockerfile" ? scanDockerfile(yaml) : scanType === "terraform" ? scanTerraform(yaml) : scanType === "iam" ? scanIam(yaml) : scanType === "dependencies" ? await scanDependencies(yaml) : scanKubernetesYaml(yaml);
       setResult(scanResult);
     } catch (err) {
       setResult(null);
@@ -122,7 +123,7 @@ export default function WorkspaceScanner() {
       .from("security_scans")
       .insert({
         user_id: user.id,
-        scan_name: scanName.trim() || "Kubernetes Security Scan",
+        scan_name: scanName.trim() || scannerNames[scanType],
         resource_count: result.resources,
         security_score: result.score,
         findings: result.findings,
@@ -176,19 +177,16 @@ export default function WorkspaceScanner() {
 
     const name = file.name.toLowerCase();
 
-    const validFile =
-      scanType === "dockerfile"
-        ? name === "dockerfile" ||
-          name.startsWith("dockerfile.") ||
-          name.endsWith(".dockerfile") ||
-          name.endsWith(".txt")
-        : name.endsWith(".yaml") || name.endsWith(".yml");
+    const validFile = scanType === "dockerfile"
+      ? name === "dockerfile" || name.startsWith("dockerfile.") || name.endsWith(".dockerfile") || name.endsWith(".txt")
+      : scanType === "terraform" ? name.endsWith(".tf")
+      : scanType === "iam" ? name.endsWith(".json")
+      : scanType === "dependencies" ? name === "requirements.txt" || name === "package.json"
+      : name.endsWith(".yaml") || name.endsWith(".yml");
 
     if (!validFile) {
       setError(
-        scanType === "dockerfile"
-          ? "Please select a Dockerfile."
-          : "Please select a Kubernetes YAML file."
+        `Please select a valid ${scannerLabels[scanType]} file.`
       );
       event.target.value = "";
       return;
@@ -287,13 +285,9 @@ export default function WorkspaceScanner() {
               <select
                 value={scanType}
                 onChange={(event) => {
-                  const selectedType = event.target.value as "kubernetes" | "dockerfile";
+                  const selectedType = event.target.value as ScannerType;
                   setScanType(selectedType);
-                  setScanName(
-                    selectedType === "dockerfile"
-                      ? "Dockerfile Security Scan"
-                      : "Kubernetes Security Scan"
-                  );
+                  setScanName(scannerNames[selectedType]);
                   setYaml("");
                   setResult(null);
                 }}
@@ -301,6 +295,9 @@ export default function WorkspaceScanner() {
               >
                 <option value="kubernetes">Kubernetes YAML</option>
                 <option value="dockerfile">Dockerfile</option>
+                <option value="terraform">Terraform (.tf)</option>
+                <option value="iam">AWS IAM (.json)</option>
+                <option value="dependencies">Dependencies (OSV)</option>
               </select>
             </label>
 
@@ -332,21 +329,21 @@ export default function WorkspaceScanner() {
   </p>
 
   <p className="mt-2 text-xs text-slate-400">
-    Select a Kubernetes YAML or Dockerfile
+    Select a file matching the scanner type
   </p>
 
   <label className="mt-4 inline-flex cursor-pointer rounded-lg bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
     Choose File
     <input
       type="file"
-      accept={scanType === "dockerfile" ? ".dockerfile,Dockerfile,.txt" : ".yaml,.yml"}
+      accept={scannerAccept[scanType]}
       onChange={uploadFile}
       className="sr-only"
     />
   </label>
 
   <p className="mt-3 text-xs text-slate-500">
-    Supported: .yaml, .yml, Dockerfile | Maximum 200 KB
+    Supported: YAML, Dockerfile, .tf, IAM .json, requirements.txt, package.json | Maximum 200 KB
   </p>
 </div>
             <div className="mt-5 flex flex-wrap gap-3">
@@ -375,9 +372,7 @@ export default function WorkspaceScanner() {
             </div>
 
             <p className="mt-5 text-xs text-slate-500">
-              YAML scanning runs locally in your browser. Saving a scan
-              stores its findings and summary in your private database
-              record, not the original YAML.
+              Configuration scanning runs in your browser. Dependency scanning sends package names and versions to the server and OSV. Saving stores findings and scores, not the original file.
             </p>
           </section>
 
@@ -386,7 +381,7 @@ export default function WorkspaceScanner() {
 
             {!result ? (
               <p className="mt-6 text-slate-400">
-                Scan a Kubernetes manifest to see findings.
+                Choose a scanner and run a scan to see findings.
               </p>
             ) : (
               <>
