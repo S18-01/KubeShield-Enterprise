@@ -1,4 +1,5 @@
 "use client";
+import WorkspaceScanner from "./workspace/WorkspaceScanner";
 import SecurityScanCharts from "./SecurityScanCharts";
 import { scanKubernetesYaml, type ScanResult } from "../lib/kubernetes-scanner";
 
@@ -1088,21 +1089,8 @@ useEffect(() => {
           )}
 
           {active === "Security Portal" && (
-            <section className="mb-5 rounded-2xl border border-cyan-500/20 bg-[#101827] p-5">
-              <div className="mb-4">
-                <h2 className="text-lg font-semibold text-white">
-                  My Security Workspace
-                </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  Sign in to scan Kubernetes YAML, save results, and manage your private scan history.
-                </p>
-              </div>
-              <a
-  href="/workspace"
-  className="inline-flex items-center justify-center rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
->
-  Open Security Scanner
-</a>
+            <section className="space-y-5">
+              <WorkspaceScanner />
             </section>
           )}
           {active === "Demo Lab" && (
