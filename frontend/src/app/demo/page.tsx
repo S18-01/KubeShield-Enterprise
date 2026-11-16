@@ -142,25 +142,6 @@ export default function DemoPage() {
     URL.revokeObjectURL(url);
   }
 
-  async function uploadFile(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 200_000) {
-      setError("File exceeds the 200 KB limit.");
-      return;
-    }
-
-    const content = await file.text();
-    setYaml(content);
-    setResult(null);
-    setError("");
-    setStatus(`Loaded ${file.name}`);
-    event.target.value = "";
-  }
-
   const severityStyle: Record<Finding["severity"], string> = {
     Critical: "text-red-400",
     High: "text-orange-400",
@@ -180,7 +161,7 @@ export default function DemoPage() {
               Interactive Security Demo Lab
             </h1>
             <p className="mt-3 text-slate-400">
-              Scan Kubernetes manifests and explore remediation.
+              Explore Kubernetes security scanning with a sample manifest.
               No account required.
             </p>
           </div>
@@ -236,24 +217,6 @@ export default function DemoPage() {
               </button>
             </div>
 
-            <div className="mt-6 rounded-xl border-2 border-dashed border-cyan-500/30 bg-cyan-500/5 px-4 py-4 text-center">
-              <div className="mb-1 text-2xl">📁</div>
-              <h3 className="text-sm font-semibold text-white">
-                Upload Kubernetes Manifest
-              </h3>
-              <p className="mt-1 text-xs text-slate-400">
-                Select a YAML file from your computer (maximum 200 KB)
-              </p>
-              <label className="mt-3 inline-flex cursor-pointer items-center justify-center rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
-                Choose YAML File
-                <input
-                  type="file"
-                  accept=".yaml,.yml"
-                  onChange={uploadFile}
-                  className="sr-only"
-                />
-              </label>
-            </div>
           </section>
 
           <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
@@ -349,7 +312,7 @@ export default function DemoPage() {
         </div>
 
         <p className="mt-6 text-sm text-slate-500">
-          Scanning runs in your browser. Uploaded YAML is not sent to
+          Scanning runs in your browser. Demo YAML is not sent to
           a server by this demo. Suggested fixes may require
           application-specific adjustments.
         </p>
