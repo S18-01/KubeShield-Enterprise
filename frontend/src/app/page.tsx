@@ -271,7 +271,7 @@ function formatTimestamp(timestamp?: string) {
 
 export default function Home() {
   const [active, setActive] = useState<Section>("Overview");
-  const [showDemoScanner, setShowDemoScanner] = useState(false);
+  const [demoScanned, setDemoScanned] = useState(false);
 
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
@@ -1086,61 +1086,22 @@ useEffect(() => {
           {active === "Demo Lab" && (
             <section className="mb-5 rounded-2xl border border-cyan-500/20 bg-[#101827] p-6">
               <h2 className="text-xl font-semibold text-white">
-                Kubernetes Security Scanner Preview
+                Kubernetes YAML Security Scanner
               </h2>
 
-              <p className="mt-3 text-sm leading-7 text-slate-400">
-                Explore how KubeShield identifies insecure Kubernetes
-                configurations. Sign in to test your own YAML manifests.
+              <p className="mt-3 text-sm text-slate-400">
+                Explore a fixed Kubernetes deployment example.
+                Click Scan Kubernetes YAML to view illustrative security findings.
               </p>
 
-              <div className="mt-6 rounded-xl border border-white/10 bg-slate-950 p-5">
-                <h3 className="font-semibold text-cyan-300">
-                  Example Security Findings
-                </h3>
+              <div className="mt-6 grid gap-5 xl:grid-cols-2">
+                <div className="rounded-xl border border-white/10 bg-slate-950 p-5">
+                  <h3 className="mb-4 font-semibold text-cyan-300">
+                    Sample Kubernetes YAML (Read Only)
+                  </h3>
 
-                <p className="mt-2 text-xs text-slate-500">
-                  Illustrative results only. No scan has been executed.
-                </p>
-
-                <div className="mt-5 space-y-4 text-sm">
-                  <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 text-red-300">
-                    Critical: Privileged container enabled
-                  </div>
-
-                  <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-4 text-orange-300">
-                    High: Host networking enabled
-                  </div>
-
-                  <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-yellow-300">
-                    Medium: Unpinned container image
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowDemoScanner((previous) => !previous)}
-                className="mt-6 inline-flex rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
-              >
-                {showDemoScanner ? "Hide Security Scanner" : "Test Security Scanner"}
-              </button>
-
-              {showDemoScanner && (
-                <div className="mt-6 overflow-hidden rounded-xl border border-cyan-500/20 bg-[#080d18]">
-                  <iframe
-                    src="/workspace"
-                    title="KubeShield Security Scanner"
-                    className="h-[900px] w-full border-0"
-                  />
-                </div>
-              )}
-            <div className="mt-6 rounded-xl border border-white/10 bg-slate-950 p-5">
-  <h3 className="mb-3 font-semibold text-cyan-300">
-    Read-Only Sample YAML
-  </h3>
-  <pre className="overflow-x-auto rounded-lg bg-[#080d18] p-4 text-xs leading-6 text-slate-300">
-    <code>{`apiVersion: apps/v1
+                  <pre className="overflow-x-auto rounded-lg bg-[#080d18] p-4 text-xs leading-6 text-slate-300">
+                    <code>{`apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vulnerable-nginx
@@ -1160,12 +1121,64 @@ spec:
           image: nginx:latest
           securityContext:
             privileged: true`}</code>
-  </pre>
-  <p className="mt-3 text-xs text-slate-400">
-    Fixed example for demonstration only. Editing and uploads require the private workspace.
-  </p>
-</div>
-</section>
+                  </pre>
+
+                  <button
+                    type="button"
+                    onClick={() => setDemoScanned(true)}
+                    className="mt-5 rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
+                  >
+                    Scan Kubernetes YAML
+                  </button>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-slate-950 p-5">
+                  <h3 className="mb-4 font-semibold text-white">
+                    Security Scan Results
+                  </h3>
+
+                  {!demoScanned ? (
+                    <p className="text-sm text-slate-400">
+                      Click Scan Kubernetes YAML to display sample security findings.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+                        <p className="font-semibold text-red-300">
+                          Critical: Privileged container enabled
+                        </p>
+                        <p className="mt-2 text-xs text-slate-300">
+                          Fix: Set securityContext.privileged to false.
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-4">
+                        <p className="font-semibold text-orange-300">
+                          High: Host networking enabled
+                        </p>
+                        <p className="mt-2 text-xs text-slate-300">
+                          Fix: Remove hostNetwork or set it to false.
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
+                        <p className="font-semibold text-yellow-300">
+                          Medium: Unpinned container image
+                        </p>
+                        <p className="mt-2 text-xs text-slate-300">
+                          Fix: Pin the image to a verified immutable digest.
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-slate-500">
+                        Demonstration results for the fixed sample YAML.
+                        No live security scan was executed.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
           )}
           {active === "Demo Lab" && (
             <>
@@ -1241,7 +1254,7 @@ spec:
           )}
 
           <footer className="py-4 text-center text-xs text-slate-500">
-            ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© 2026 KubeShield Enterprise. All rights reserved.
+            ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
