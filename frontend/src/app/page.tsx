@@ -1,4 +1,4 @@
-﻿
+
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -365,20 +365,19 @@ useEffect(() => {
       : "Monitoring data unavailable";
 
   function navigate(section: Section) {
-  setActive(section);
-  setSidebarOpen(false);
+    setActive(section);
+    setSidebarOpen(false);
 
-  const url = new URL(window.location.href);
+    const url = new URL(window.location.href);
 
-  if (section === "Overview") {
-    url.searchParams.delete("section");
-  } else {
-    url.searchParams.set("section", section);
+    if (section === "Overview") {
+      url.searchParams.delete("section");
+    } else {
+      url.searchParams.set("section", section);
+    }
+
+    window.history.pushState({}, "", url.toString());
   }
-
-  window.history.pushState({}, "", url.toString());
-}
-
   function runScenario() {
     const messages: Record<string, string> = {
       "Normal traffic":
@@ -1180,7 +1179,7 @@ useEffect(() => {
           )}
 
           <footer className="py-4 text-center text-xs text-slate-500">
-            © 2026 KubeShield Enterprise. All rights reserved.
+            Â© 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
