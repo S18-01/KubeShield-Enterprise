@@ -1,4 +1,4 @@
-﻿
+
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -271,6 +271,13 @@ function formatTimestamp(timestamp?: string) {
 
 export default function Home() {
   const [active, setActive] = useState<Section>("Overview");
+
+  useEffect(() => {
+    const section = new URLSearchParams(window.location.search).get("section");
+    if (section === "Security Portal") {
+      setActive("Security Portal");
+    }
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scenario, setScenario] = useState("Normal traffic");
 
@@ -1164,10 +1171,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
-
-
-
-

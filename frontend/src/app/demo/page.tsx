@@ -1,4 +1,4 @@
-﻿
+
 "use client";
 
 import { useState } from "react";
@@ -236,15 +236,24 @@ export default function DemoPage() {
               </button>
             </div>
 
-            <label className="mt-5 block text-sm text-slate-400">
-              Upload a YAML file (maximum 200 KB)
-              <input
-                type="file"
-                accept=".yaml,.yml"
-                onChange={uploadFile}
-                className="mt-2 block w-full text-sm"
-              />
-            </label>
+            <div className="mt-6 rounded-xl border-2 border-dashed border-cyan-500/30 bg-cyan-500/5 px-4 py-4 text-center">
+              <div className="mb-1 text-2xl">📁</div>
+              <h3 className="text-sm font-semibold text-white">
+                Upload Kubernetes Manifest
+              </h3>
+              <p className="mt-1 text-xs text-slate-400">
+                Select a YAML file from your computer (maximum 200 KB)
+              </p>
+              <label className="mt-3 inline-flex cursor-pointer items-center justify-center rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
+                Choose YAML File
+                <input
+                  type="file"
+                  accept=".yaml,.yml"
+                  onChange={uploadFile}
+                  className="sr-only"
+                />
+              </label>
+            </div>
           </section>
 
           <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
@@ -348,4 +357,3 @@ export default function DemoPage() {
     </main>
   );
 }
-

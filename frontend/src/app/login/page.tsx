@@ -27,14 +27,14 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/workspace`,
+            emailRedirectTo: `${window.location.origin}/`,
           },
         });
 
         if (authError) throw authError;
 
         if (data.session) {
-          router.push("/workspace");
+          router.push("/");
         } else {
           setMessage(
             "Registration submitted. Check your email for a confirmation link if confirmation is required."
@@ -49,7 +49,7 @@ export default function LoginPage() {
 
         if (authError) throw authError;
 
-        router.push("/workspace");
+        router.push("/");
       }
     } catch (err) {
       setError(
@@ -154,8 +154,76 @@ export default function LoginPage() {
             ? "New to KubeShield? Create an account"
             : "Already have an account? Sign in"}
         </button>
+        {mode === "login" && (
+          <button
+            type="button"
+            onClick={async () => {
+              setError("");
+              setMessage("");
 
-        <div className="mt-7 border-t border-slate-800 pt-5 text-center">
+              if (!email.trim()) {
+                setError("Enter your email address first.");
+                return;
+              }
+
+              setLoading(true);
+
+              try {
+                const { error } = await supabase.auth.resetPasswordForEmail(
+                  email.trim(),
+                  {
+                    redirectTo: `https://kube-shield-enterprise.vercel.app/reset-password`,
+                  }
+                );
+
+                if (error) throw error;
+
+                setMessage(
+                  "If this email is registered, a password reset link will be sent."
+                );
+              } catch (err) {
+                setError(
+                  err instanceof Error
+                    ? err.message
+                    : "Unable to send password reset email."
+                );
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            className="mt-4 w-full text-right text-sm text-cyan-400 hover:underline disabled:opacity-50"
+          >
+            Forgot Password?
+          </button>
+        )}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div className="mt-7 border-t border-slate-800 pt-5 text-center">
           <Link href="/demo" className="text-sm text-slate-400 hover:text-white">
             Explore the free Demo Lab without signing in
           </Link>
