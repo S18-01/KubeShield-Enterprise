@@ -1,6 +1,7 @@
 "use client";
 import WorkspaceScanner from "./workspace/WorkspaceScanner";
 import SecurityScanCharts from "./SecurityScanCharts";
+import { scanDockerfile } from "../lib/dockerfile-scanner";
 import { scanKubernetesYaml, type ScanResult } from "../lib/kubernetes-scanner";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -292,9 +293,15 @@ function formatTimestamp(timestamp?: string) {
   });
 }
 
+const DEMO_DOCKERFILE = `FROM ubuntu:latest
+RUN apt-get update
+RUN curl https://example.com/install.sh | sh
+USER root
+CMD ["bash"]`;
 export default function Home() {
   const [active, setActive] = useState<Section>("Overview");
   const [demoResult, setDemoResult] = useState<ScanResult | null>(null);
+  const [demoScanType, setDemoScanType] = useState<"kubernetes" | "dockerfile">("kubernetes");
 
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
@@ -1096,49 +1103,49 @@ useEffect(() => {
           {active === "Demo Lab" && (
             <section className="mb-5 rounded-2xl border border-cyan-500/20 bg-[#101827] p-6">
               <h2 className="text-xl font-semibold text-white">
-                Kubernetes YAML Security Scanner
+                Security Configuration Scanner
               </h2>
 
               <p className="mt-3 text-sm text-slate-400">
-                Explore a fixed Kubernetes deployment example.
-                Click Scan Kubernetes YAML to view illustrative security findings.
+                Explore security findings using predefined Kubernetes YAML and Dockerfile examples.
+              </p>
+
+              <label className="mt-5 block text-sm text-slate-300">
+                Scanner Type
+                <select
+                  value={demoScanType}
+                  onChange={(event) => {
+                    setDemoScanType(event.target.value as "kubernetes" | "dockerfile");
+                    setDemoResult(null);
+                  }}
+                  className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 p-3 text-white"
+                >
+                  <option value="kubernetes">Kubernetes YAML</option>
+                  <option value="dockerfile">Dockerfile</option>
+                </select>
+              </label>
+
+              <p className="mt-3 text-xs text-slate-400">
+                Read-only samples. No files are uploaded or infrastructure modified.
+                Run the scanner to inspect the selected example.
               </p>
 
               <div className="mt-6 grid gap-5 xl:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-slate-950 p-5">
                   <h3 className="mb-4 font-semibold text-cyan-300">
-                    Sample Kubernetes YAML (Read Only)
+                    {demoScanType === "dockerfile" ? "Sample Dockerfile (Read Only)" : "Sample Kubernetes YAML (Read Only)"}
                   </h3>
 
                   <pre className="overflow-x-auto rounded-lg bg-[#080d18] p-4 text-xs leading-6 text-slate-300">
-                    <code>{`apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vulnerable-nginx
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      hostNetwork: true
-      containers:
-        - name: nginx
-          image: nginx:latest
-          securityContext:
-            privileged: true`}</code>
+                    <code>{demoScanType === "dockerfile" ? DEMO_DOCKERFILE : DEMO_YAML}</code>
                   </pre>
 
                   <button
                     type="button"
-                    onClick={() => setDemoResult(scanKubernetesYaml(DEMO_YAML))}
+                    onClick={() => setDemoResult(demoScanType === "dockerfile" ? scanDockerfile(DEMO_DOCKERFILE) : scanKubernetesYaml(DEMO_YAML))}
                     className="mt-5 rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
                   >
-                    Scan Kubernetes YAML
+                    {demoScanType === "dockerfile" ? "Scan Dockerfile" : "Scan Kubernetes YAML"}
                   </button>
                 </div>
 
@@ -1149,7 +1156,7 @@ spec:
 
                   {!demoResult ? (
                     <p className="text-sm text-slate-400">
-                      Click Scan Kubernetes YAML to run the security scanner.
+                      Run the selected security scanner to view findings.
                     </p>
                   ) : (
                     <div className="space-y-4">

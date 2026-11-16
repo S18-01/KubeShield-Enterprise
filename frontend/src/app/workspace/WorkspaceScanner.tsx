@@ -1,5 +1,6 @@
 
 "use client";
+import { scanDockerfile } from "@/lib/dockerfile-scanner";
 import SecurityScanCharts from "../SecurityScanCharts";
 
 import { useCallback, useEffect, useState } from "react";
@@ -49,6 +50,7 @@ export default function WorkspaceScanner() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [yaml, setYaml] = useState(sample);
+  const [scanType, setScanType] = useState<"kubernetes" | "dockerfile">("kubernetes");
   const [scanName, setScanName] = useState("Kubernetes Security Scan");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [history, setHistory] = useState<SavedScan[]>([]);
@@ -101,7 +103,7 @@ export default function WorkspaceScanner() {
     setMessage("");
 
     try {
-      const scanResult = scanKubernetesYaml(yaml);
+      const scanResult = scanType === "dockerfile" ? scanDockerfile(yaml) : scanKubernetesYaml(yaml);
       setResult(scanResult);
     } catch (err) {
       setResult(null);
@@ -168,6 +170,26 @@ export default function WorkspaceScanner() {
 
     if (file.size > 200_000) {
       setError("Maximum file size is 200 KB.");
+      event.target.value = "";
+      return;
+    }
+
+    const name = file.name.toLowerCase();
+
+    const validFile =
+      scanType === "dockerfile"
+        ? name === "dockerfile" ||
+          name.startsWith("dockerfile.") ||
+          name.endsWith(".dockerfile") ||
+          name.endsWith(".txt")
+        : name.endsWith(".yaml") || name.endsWith(".yml");
+
+    if (!validFile) {
+      setError(
+        scanType === "dockerfile"
+          ? "Please select a Dockerfile."
+          : "Please select a Kubernetes YAML file."
+      );
       event.target.value = "";
       return;
     }
@@ -259,7 +281,28 @@ export default function WorkspaceScanner() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-            <h2 className="text-xl font-semibold">Scan Kubernetes YAML</h2>
+            <h2 className="text-xl font-semibold">Security Configuration Scanner</h2>
+            <label className="mt-5 block text-sm text-slate-400">
+              Scanner Type
+              <select
+                value={scanType}
+                onChange={(event) => {
+                  const selectedType = event.target.value as "kubernetes" | "dockerfile";
+                  setScanType(selectedType);
+                  setScanName(
+                    selectedType === "dockerfile"
+                      ? "Dockerfile Security Scan"
+                      : "Kubernetes Security Scan"
+                  );
+                  setYaml("");
+                  setResult(null);
+                }}
+                className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 p-3 text-white"
+              >
+                <option value="kubernetes">Kubernetes YAML</option>
+                <option value="dockerfile">Dockerfile</option>
+              </select>
+            </label>
 
             <label className="mt-5 block text-sm text-slate-400">
               Scan name
@@ -285,25 +328,25 @@ export default function WorkspaceScanner() {
   <div className="mb-3 text-3xl">📁</div>
 
   <p className="text-sm font-semibold text-white">
-    Upload Kubernetes Manifest
+    Upload Security Configuration
   </p>
 
   <p className="mt-2 text-xs text-slate-400">
-    Select a YAML file from your computer
+    Select a Kubernetes YAML or Dockerfile
   </p>
 
   <label className="mt-4 inline-flex cursor-pointer rounded-lg bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
-    Choose YAML File
+    Choose File
     <input
       type="file"
-      accept=".yaml,.yml"
+      accept={scanType === "dockerfile" ? ".dockerfile,Dockerfile,.txt" : ".yaml,.yml"}
       onChange={uploadFile}
       className="sr-only"
     />
   </label>
 
   <p className="mt-3 text-xs text-slate-500">
-    Supported formats: .yaml, .yml | Maximum 200 KB
+    Supported: .yaml, .yml, Dockerfile | Maximum 200 KB
   </p>
 </div>
             <div className="mt-5 flex flex-wrap gap-3">
@@ -311,7 +354,7 @@ export default function WorkspaceScanner() {
                 onClick={scan}
                 className="rounded-lg bg-cyan-400 px-5 py-3 font-semibold text-slate-950"
               >
-                Scan YAML
+                Run Security Scan
               </button>
 
               <button
