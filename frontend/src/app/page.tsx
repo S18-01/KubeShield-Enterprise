@@ -1,4 +1,5 @@
 "use client";
+import SecurityScanCharts from "./SecurityScanCharts";
 import { scanKubernetesYaml, type ScanResult } from "../lib/kubernetes-scanner";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -1183,6 +1184,7 @@ spec:
                         {demoResult.findings.length} security findings detected
                       </p>
 
+                      <SecurityScanCharts score={demoResult.score} findings={demoResult.findings} />
                       {demoResult.findings.map((finding) => (
                         <div
                           key={finding.id}

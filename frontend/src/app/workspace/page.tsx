@@ -1,5 +1,6 @@
 
 "use client";
+import SecurityScanCharts from "../SecurityScanCharts";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -361,6 +362,7 @@ export default function WorkspacePage() {
                   </div>
                 </div>
 
+                <SecurityScanCharts score={result.score} findings={result.findings} />
                 <div className="max-h-96 space-y-3 overflow-y-auto">
                   {result.findings.map((finding) => (
                     <article
