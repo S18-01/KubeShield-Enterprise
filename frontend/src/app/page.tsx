@@ -1,4 +1,4 @@
-﻿
+
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -271,6 +271,7 @@ function formatTimestamp(timestamp?: string) {
 
 export default function Home() {
   const [active, setActive] = useState<Section>("Overview");
+  const [showDemoScanner, setShowDemoScanner] = useState(false);
 
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
@@ -1117,12 +1118,23 @@ useEffect(() => {
                 </div>
               </div>
 
-              <a
-                href="/workspace"
+              <button
+                type="button"
+                onClick={() => setShowDemoScanner((previous) => !previous)}
                 className="mt-6 inline-flex rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
               >
-                Test Security Scanner
-              </a>
+                {showDemoScanner ? "Hide Security Scanner" : "Test Security Scanner"}
+              </button>
+
+              {showDemoScanner && (
+                <div className="mt-6 overflow-hidden rounded-xl border border-cyan-500/20 bg-[#080d18]">
+                  <iframe
+                    src="/workspace"
+                    title="KubeShield Security Scanner"
+                    className="h-[900px] w-full border-0"
+                  />
+                </div>
+              )}
             <div className="mt-6 rounded-xl border border-white/10 bg-slate-950 p-5">
   <h3 className="mb-3 font-semibold text-cyan-300">
     Read-Only Sample YAML
