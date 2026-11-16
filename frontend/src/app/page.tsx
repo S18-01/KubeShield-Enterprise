@@ -1,4 +1,4 @@
-
+﻿
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -1123,7 +1123,37 @@ useEffect(() => {
               >
                 Test Security Scanner
               </a>
-            </section>
+            <div className="mt-6 rounded-xl border border-white/10 bg-slate-950 p-5">
+  <h3 className="mb-3 font-semibold text-cyan-300">
+    Read-Only Sample YAML
+  </h3>
+  <pre className="overflow-x-auto rounded-lg bg-[#080d18] p-4 text-xs leading-6 text-slate-300">
+    <code>{`apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vulnerable-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      hostNetwork: true
+      containers:
+        - name: nginx
+          image: nginx:latest
+          securityContext:
+            privileged: true`}</code>
+  </pre>
+  <p className="mt-3 text-xs text-slate-400">
+    Fixed example for demonstration only. Editing and uploads require the private workspace.
+  </p>
+</div>
+</section>
           )}
           {active === "Demo Lab" && (
             <>
@@ -1199,10 +1229,11 @@ useEffect(() => {
           )}
 
           <footer className="py-4 text-center text-xs text-slate-500">
-            ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© 2026 KubeShield Enterprise. All rights reserved.
+            ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
     </div>
   );
 }
+
