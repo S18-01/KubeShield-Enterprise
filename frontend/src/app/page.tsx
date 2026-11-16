@@ -1074,11 +1074,12 @@ useEffect(() => {
                   Sign in to scan Kubernetes YAML, save results, and manage your private scan history.
                 </p>
               </div>
-              <iframe
-                title="Private Security Workspace"
-                src="/workspace"
-                className="h-[1100px] w-full rounded-xl border border-white/10 bg-slate-950"
-              />
+              <a
+  href="/workspace"
+  className="inline-flex items-center justify-center rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+>
+  Open Security Scanner
+</a>
             </section>
           )}
           {active === "Demo Lab" && (
@@ -1173,7 +1174,7 @@ useEffect(() => {
           )}
 
           <footer className="py-4 text-center text-xs text-slate-500">
-            Ã‚Â© 2026 KubeShield Enterprise. All rights reserved.
+            Ãƒâ€šÃ‚Â© 2026 KubeShield Enterprise. All rights reserved.
           </footer>
         </main>
       </div>
