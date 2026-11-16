@@ -42,7 +42,8 @@ type Section =
   | "Monitoring"
   | "Security Center"
   | "CI/CD Pipeline"
-  | "Demo Lab";
+  | "Demo Lab"
+  | "Security Portal";
 
 type HistoryPoint = {
   time: string;
@@ -68,6 +69,7 @@ const navigation = [
   { name: "Security Center", icon: ShieldCheck },
   { name: "CI/CD Pipeline", icon: Workflow },
   { name: "Demo Lab", icon: Terminal },
+  { name: "Security Portal", icon: ShieldCheck },
 ] as const;
 
 const scanResults = [
@@ -460,6 +462,15 @@ export default function Home() {
                 )}
               </button>
             ))}
+            <div className="my-3 border-t border-white/10" />
+
+            <a
+              href="/login"
+              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white"
+            >
+              <ShieldCheck size={18} />
+              Sign In / Register
+            </a>
           </nav>
         </div>
 
@@ -1037,6 +1048,41 @@ export default function Home() {
             </>
           )}
 
+          {active === "Security Portal" && (
+            <section className="mb-5 rounded-2xl border border-cyan-500/20 bg-[#101827] p-5">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-white">
+                  My Security Workspace
+                </h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  Sign in to scan Kubernetes YAML, save results, and manage your private scan history.
+                </p>
+              </div>
+              <iframe
+                title="Private Security Workspace"
+                src="/workspace"
+                className="h-[1100px] w-full rounded-xl border border-white/10 bg-slate-950"
+              />
+            </section>
+          )}
+          {active === "Demo Lab" && (
+            <section className="mb-5 rounded-2xl border border-cyan-500/20 bg-[#101827] p-5">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-white">
+                  Kubernetes YAML Security Scanner
+                </h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  Scan manifests, inspect findings, apply suggested fixes,
+                  and download reports without signing in.
+                </p>
+              </div>
+              <iframe
+                title="Kubernetes YAML Security Scanner"
+                src="/demo"
+                className="h-[950px] w-full rounded-xl border border-white/10 bg-slate-950"
+              />
+            </section>
+          )}
           {active === "Demo Lab" && (
             <>
               <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-xs leading-6 text-cyan-200">
@@ -1118,3 +1164,10 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+
+
+
+
