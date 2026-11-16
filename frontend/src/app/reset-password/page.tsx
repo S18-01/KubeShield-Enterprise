@@ -18,30 +18,23 @@ export default function ResetPasswordPage() {
 
     async function initializeRecovery() {
       const params = new URLSearchParams(window.location.search);
-      const hash = new URLSearchParams(
-        window.location.hash.replace(/^#/, "")
-      );
+      const code = params.get("code");
+      const tokenHash = params.get("token_hash");
+      const errorCode = params.get("error_code");
 
-      const errorCode = params.get("error_code") || hash.get("error_code");
-      const errorDescription =
-        params.get("error_description") || hash.get("error_description");
-
-      if (errorCode || errorDescription) {
+      if (errorCode) {
         if (active) {
           setError(
             errorCode === "otp_expired"
-              ? "This reset link has expired. Please request a new one."
-              : errorDescription || "Invalid password reset link."
+              ? "This reset link has expired. Request a new email."
+              : "This reset link is invalid."
           );
           setChecking(false);
         }
         return;
       }
 
-      const tokenHash = params.get("token_hash");
-      const type = params.get("type");
-
-      if (tokenHash && type === "recovery") {
+      if (tokenHash && params.get("type") === "recovery") {
         const { error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
           type: "recovery",
@@ -59,18 +52,9 @@ export default function ResetPasswordPage() {
         return;
       }
 
-      const accessToken = hash.get("access_token");
-      const refreshToken = hash.get("refresh_token");
-
-      if (
-        hash.get("type") === "recovery" &&
-        accessToken &&
-        refreshToken
-      ) {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
+      if (code) {
+        const { error } =
+          await supabase.auth.exchangeCodeForSession(code);
 
         if (!active) return;
 
@@ -91,7 +75,7 @@ export default function ResetPasswordPage() {
 
       if (active) {
         setError(
-          "No valid recovery token was detected. Please request a new password reset email."
+          "No valid recovery link was detected. Request a new password reset email."
         );
         setChecking(false);
       }
