@@ -18,23 +18,20 @@ export default function ResetPasswordPage() {
 
     async function initializeRecovery() {
       const params = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(
+      const hash = new URLSearchParams(
         window.location.hash.replace(/^#/, "")
       );
 
-      const errorCode =
-        params.get("error_code") || hashParams.get("error_code");
-
+      const errorCode = params.get("error_code") || hash.get("error_code");
       const errorDescription =
-        params.get("error_description") ||
-        hashParams.get("error_description");
+        params.get("error_description") || hash.get("error_description");
 
       if (errorCode || errorDescription) {
         if (active) {
           setError(
             errorCode === "otp_expired"
-              ? "This password reset link has expired or has already been used. Request a new link."
-              : errorDescription || "This password reset link is invalid."
+              ? "This reset link has expired. Please request a new one."
+              : errorDescription || "Invalid password reset link."
           );
           setChecking(false);
         }
@@ -45,15 +42,15 @@ export default function ResetPasswordPage() {
       const type = params.get("type");
 
       if (tokenHash && type === "recovery") {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
+        const { error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
           type: "recovery",
         });
 
         if (!active) return;
 
-        if (verifyError) {
-          setError(verifyError.message);
+        if (error) {
+          setError(error.message);
         } else {
           setRecoveryVerified(true);
         }
@@ -62,34 +59,50 @@ export default function ResetPasswordPage() {
         return;
       }
 
-      // Supabase can also deliver recovery sessions through
-      // PASSWORD_RECOVERY events after processing the email link.
-      // A normal signed-in session is not sufficient here.
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+
+      if (
+        hash.get("type") === "recovery" &&
+        accessToken &&
+        refreshToken
+      ) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (!active) return;
+
+        if (error) {
+          setError(error.message);
+        } else {
+          setRecoveryVerified(true);
+          window.history.replaceState(
+            {},
+            "",
+            window.location.pathname
+          );
+        }
+
+        setChecking(false);
+        return;
+      }
+
       if (active) {
+        setError(
+          "No valid recovery token was detected. Please request a new password reset email."
+        );
         setChecking(false);
       }
     }
-
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!active) return;
-
-        if (event === "PASSWORD_RECOVERY" && session) {
-          setRecoveryVerified(true);
-          setError("");
-          setChecking(false);
-        }
-      }
-    );
 
     void initializeRecovery();
 
     return () => {
       active = false;
-      subscription.subscription.unsubscribe();
     };
   }, []);
-
   async function handleReset(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
